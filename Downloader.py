@@ -24,6 +24,7 @@ class GenomeDownloader(object):
         self.ascp_key = None
         self.ascp_param = None
         self.ascp_pre = "anonftp@ftp.ncbi.nih.gov:"
+        self.lineage = None
 
     def set_out(self, out):
         """
@@ -86,32 +87,69 @@ class GenomeDownloader(object):
         file_path = f"{self.ascp_pre}/pub/taxonomy/taxdump.tar.gz"
         self.taxdump = os.path.join(self.out, "taxdump.tar.gz")
         logging.info(f"Download the {file_path}")
-        self.ascp_download(file_path, self.taxdump)
-        logging.info(f"Saved at {self.taxdump}")
+        if self.ascp_download(file_path, self.taxdump) != 0:
+            logging.error(f"Fail to download {file_path}")
+            sys.exit()
+        else:
+            logging.info(f"Saved at {self.taxdump}")
+
+    def set_lineage(self, taxonid, file_nodes_dmp=None):
+        """
+
+        :param taxonid:
+        :param names:
+        :return:
+        """
+        from Lineage import Node
+        if file_nodes_dmp is None:
+            self.get_taxon_dump()
+            cmd = f"tar xf {self.taxdump} -C {os.path.dirname(self.taxdump)} nodes.dmp"
+            cmd_list = cmd.strip().split()
+            try:
+                check_call(cmd_list)
+                file_nodes_dmp = os.path.join(os.path.dirname(self.taxdump),
+                                              "nodes.dmp")
+            except Exception as e:
+                logging.error(e)
+
+        node = Node(file_nodes_dmp)
+        for taxon in taxonid:
+            node.get_lineage(taxon)
+        self.lineage = node.lineage
 
     def get_summary(self):
         """
         Get the summary file
         """
         summary_files = []
-        for og in self.og:
-            file_path = f"{self.ascp_pre}/genomes/refseq/{og}/assembly_summary.txt"
-            summary = os.path.join(self.out, f"{og}_assembly_summary.txt")
+        if "all" in self.og:
+            file_path = f"{self.ascp_pre}/genomes/refseq/assembly_summary_refseq.txt"
+            self.summary = os.path.join(self.out, "assembly_summary.txt")
             logging.info(f"Download the {file_path}")
-            if self.ascp_download(file_path, summary) != 0:
+            if self.ascp_download(file_path, self.summary) != 0:
                 logging.error(f"Fail to download {file_path}")
-                sys.exit()
+                sys.exit(e)
             else:
-                logging.info(f"Saved at {summary}")
-            summary_files.append(summary)
-        logging.info("Merge the summary files")
-        self.summary = os.path.join(self.out, f"assembly_summary.txt")
-        cmd = "cat {} > {}".format(' '.join(summary_files), self.summary)
-        try:
-            run(cmd, shell=True)
-            logging.info(f"Saved at {self.summary}")
-        except Exception as e:
-            sys.exit(e)
+                logging.info(f"Saved at {self.summary}")
+        else:
+            for og in self.og:
+                file_path = f"{self.ascp_pre}/genomes/refseq/{og}/assembly_summary.txt"
+                summary = os.path.join(self.out, f"{og}_assembly_summary.txt")
+                logging.info(f"Download the {file_path}")
+                if self.ascp_download(file_path, summary) != 0:
+                    logging.error(f"Fail to download {file_path}")
+                    sys.exit()
+                else:
+                    logging.info(f"Saved at {summary}")
+                summary_files.append(summary)
+            logging.info("Merge the summary files")
+            self.summary = os.path.join(self.out, f"assembly_summary.txt")
+            cmd = "cat {} > {}".format(' '.join(summary_files), self.summary)
+            try:
+                run(cmd, shell=True)
+                logging.info(f"Saved at {self.summary}")
+            except Exception as e:
+                sys.exit(e)
 
     def filter_summary(self):
         """
@@ -134,6 +172,8 @@ class GenomeDownloader(object):
                     if "all" not in self.level:
                         if arr[11] not in self.level:
                             continue
+                    if self.lineage and arr[5] not in self.lineage:
+                        continue
                     print(*arr, sep='\t', file=OUT)
 
     def generate_download_url(self, summary=None):

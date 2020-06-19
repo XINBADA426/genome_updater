@@ -6,7 +6,6 @@
 # @Last Modified time: 2020-06-16 16:00:38
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
 
@@ -15,6 +14,19 @@ from Downloader import GenomeDownloader
 #### Some Functions ####
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def parse_taxon(file_name):
+    """
+
+    :param file_name:
+    :return:
+    """
+    res = set()
+    with open(file_name, 'r') as IN:
+        for line in IN:
+            res.add(line.strip())
+    return res
 
 
 class GbffDownloader(GenomeDownloader):
@@ -65,8 +77,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--og',
               required=True,
               multiple=True,
-              type=click.Choice(["archaea", "bacteria", "fungi", "viral"]),
+              type=click.Choice(
+                  ["all", "archaea", "bacteria", "fungi", "viral"]),
               help="The Organism group to downloads")
+@click.option('--taxon',
+              type=click.Path(),
+              help="The file contain taxon id you want to download")
 @click.option('-c', '--category',
               multiple=True,
               default=["all"],
@@ -105,7 +121,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               required=True,
               type=click.Path(),
               help="The out put dir")
-def cli(og, category, level, ascp, key, bandwidth, thread, out):
+def cli(og, taxon, category, level, ascp, key, bandwidth, thread, out):
     """
     Update the refseq genome sequence
 
@@ -125,6 +141,8 @@ def cli(og, category, level, ascp, key, bandwidth, thread, out):
     downloader.set_og(og)
     downloader.set_category(category)
     downloader.set_level(level)
+    if taxon:
+        downloader.set_lineage(parse_taxon(taxon))
 
     # Start to deal the info
     downloader.get_summary()
