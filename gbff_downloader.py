@@ -54,34 +54,6 @@ class GbffDownloader(GenomeDownloader):
                 print(*[key, value], sep='\t', file=OUT)
         logging.info(f"Saved download_info to {self.file_download_url}")
 
-    def library_download(self, file_download_url=None, thread=1):
-        """
-        """
-        download_info = {}
-        if file_download_url is None:
-            download_info = self.download_url
-        else:
-            with open(file_download_url, 'r') as IN:
-                for line in IN:
-                    arr = line.strip().split('\t')
-                    download_info[arr[0]] = arr[1]
-
-        tasks = []
-        fail_tasks = []
-        with ThreadPoolExecutor(max_workers=thread) as executor:
-            for key, value in download_info.items():
-                task = executor.submit(self.ascp_download, value, key)
-                tasks.append(task)
-            for future in as_completed(tasks):
-                exec_res = future.result()
-                if exec_res is not 0:
-                    fail_tasks.append(future.result())
-
-        if len(fail_tasks) > 0:
-            with open(os.path.join(self.out, "download.fail"), 'w') as OUT:
-                for fail_task in fail_tasks:
-                    print(*fail_task, sep='\t', file=OUT)
-
 
 ########################
 

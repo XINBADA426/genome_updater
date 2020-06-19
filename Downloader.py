@@ -7,6 +7,7 @@
 import logging
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from subprocess import check_call
 from subprocess import run
 
@@ -135,11 +136,14 @@ class GenomeDownloader(object):
                             continue
                     print(*arr, sep='\t', file=OUT)
 
-    def library_download(self, summary=None):
+    def generate_download_url(self, summary=None):
         """
+
+        :return:
         """
         if summary is None:
             summary = self.filterd_summary
+        self.download_url = {}
         with open(summary, 'r') as IN:
             for line in IN:
                 arr = line.strip().split('\t')
@@ -151,6 +155,39 @@ class GenomeDownloader(object):
                 ascp_url = ftp_url.replace(
                     "ftp://ftp.ncbi.nlm.nih.gov", self.ascp_pre) + f"/{name}"
                 file_out = os.path.join(self.out, name)
-                logging.info(f'Download {arr[0]}...')
-                self.ascp_download(ascp_url, file_out)
-                logging.info(f"Saved {arr[0]} at {file_out}")
+                self.download_url[ascp_url] = file_out
+
+        logging.info(f"{len(self.download_url)} files to download")
+        self.file_download_url = os.path.join(self.out, "download.info")
+        with open(self.file_download_url, 'w') as OUT:
+            for key, value in self.download_url.items():
+                print(*[key, value], sep='\t', file=OUT)
+        logging.info(f"Saved download_info to {self.file_download_url}")
+
+    def library_download(self, file_download_url=None, thread=1):
+        """
+        """
+        download_info = {}
+        if file_download_url is None:
+            download_info = self.download_url
+        else:
+            with open(file_download_url, 'r') as IN:
+                for line in IN:
+                    arr = line.strip().split('\t')
+                    download_info[arr[0]] = arr[1]
+
+        tasks = []
+        fail_tasks = []
+        with ThreadPoolExecutor(max_workers=thread) as executor:
+            for key, value in download_info.items():
+                task = executor.submit(self.ascp_download, key, value)
+                tasks.append(task)
+            for future in as_completed(tasks):
+                exec_res = future.result()
+                if exec_res is not 0:
+                    fail_tasks.append(future.result())
+
+        if len(fail_tasks) > 0:
+            with open(os.path.join(self.out, "download.fail"), 'w') as OUT:
+                for fail_task in fail_tasks:
+                    print(*fail_task, sep='\t', file=OUT)

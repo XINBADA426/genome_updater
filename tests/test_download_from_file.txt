@@ -1,0 +1,8 @@
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/900/475/145/GCF_900475145.1_42727_G01/GCF_900475145.1_42727_G01_genomic.gbff.gz	./GCF_900475145.1_42727_G01_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/001/989/555/GCF_001989555.1_ASM198955v1/GCF_001989555.1_ASM198955v1_genomic.gbff.gz	./GCF_001989555.1_ASM198955v1_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/003/812/665/GCF_003812665.1_ASM381266v1/GCF_003812665.1_ASM381266v1_genomic.gbff.gz	./GCF_003812665.1_ASM381266v1_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/003/966/405/GCF_003966405.1_ASM396640v1/GCF_003966405.1_ASM396640v1_genomic.gbff.gz	./GCF_003966405.1_ASM396640v1_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/900/092/475/GCF_900092475.1_Ef_aus00233/GCF_900092475.1_Ef_aus00233_genomic.gbff.gz	./GCF_900092475.1_Ef_aus00233_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/900/634/805/GCF_900634805.1_E0139_hybrid_assembly/GCF_900634805.1_E0139_hybrid_assembly_genomic.gbff.gz	./GCF_900634805.1_E0139_hybrid_assembly_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/013/341/255/GCF_013341255.1_ASM1334125v1/GCF_013341255.1_ASM1334125v1_genomic.gbff.gz	./GCF_013341255.1_ASM1334125v1_genomic.gbff.gz
+anonftp@ftp.ncbi.nih.gov:/genomes/all/GCF/000/007/845/GCF_000007845.1_ASM784v1/GCF_000007845.1_ASM784v1_genomic.gbff.gz	./GCF_000007845.1_ASM784v1_genomic.gbff.gz
