@@ -74,6 +74,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--db',
+              default="refseq",
+              show_default=True,
+              type=click.Choice(
+                  ["refseq", "genbank"]),
+              help="The database to use")
 @click.option('--og',
               required=True,
               multiple=True,
@@ -121,7 +127,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               required=True,
               type=click.Path(),
               help="The out put dir")
-def cli(og, taxon, category, level, ascp, key, bandwidth, thread, out):
+def cli(db, og, taxon, category, level, ascp, key, bandwidth, thread, out):
     """
     Update the refseq genome sequence
 
@@ -138,6 +144,7 @@ def cli(og, taxon, category, level, ascp, key, bandwidth, thread, out):
     ascp_param = f"-k 1 -T -l{bandwidth}"
     downloader.set_ascp_param(ascp_param)
     # set download info
+    downloader.set_db(db)
     downloader.set_og(og)
     downloader.set_category(category)
     downloader.set_level(level)

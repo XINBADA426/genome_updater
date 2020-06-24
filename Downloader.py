@@ -24,6 +24,7 @@ class GenomeDownloader(object):
         self.ascp_key = None
         self.ascp_param = None
         self.ascp_pre = "anonftp@ftp.ncbi.nih.gov:"
+        self.db = None
         self.lineage = None
 
     def set_out(self, out):
@@ -52,6 +53,14 @@ class GenomeDownloader(object):
         Set ascp param
         """
         self.ascp_param = ascp_param
+
+    def set_db(self,db):
+        """
+
+        :param db:
+        :return:
+        """
+        self.db = db
 
     def set_og(self, og):
         """
@@ -123,7 +132,7 @@ class GenomeDownloader(object):
         """
         summary_files = []
         if "all" in self.og:
-            file_path = f"{self.ascp_pre}/genomes/refseq/assembly_summary_refseq.txt"
+            file_path = f"{self.ascp_pre}/genomes/{self.db}/assembly_summary_{self.db}.txt"
             self.summary = os.path.join(self.out, "assembly_summary.txt")
             logging.info(f"Download the {file_path}")
             if self.ascp_download(file_path, self.summary) != 0:
@@ -133,7 +142,7 @@ class GenomeDownloader(object):
                 logging.info(f"Saved at {self.summary}")
         else:
             for og in self.og:
-                file_path = f"{self.ascp_pre}/genomes/refseq/{og}/assembly_summary.txt"
+                file_path = f"{self.ascp_pre}/genomes/{self.db}/{og}/assembly_summary.txt"
                 summary = os.path.join(self.out, f"{og}_assembly_summary.txt")
                 logging.info(f"Download the {file_path}")
                 if self.ascp_download(file_path, summary) != 0:
