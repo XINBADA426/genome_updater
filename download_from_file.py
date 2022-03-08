@@ -9,7 +9,7 @@ import os
 
 import click
 
-from Downloader import GenomeDownloader
+from lib.Downloader import GenomeDownloader
 
 #### Some Functions ####
 logging.basicConfig(level=logging.INFO,
