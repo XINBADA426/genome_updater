@@ -6,25 +6,28 @@
 # @Last Modified time: 2020-06-17 9:26:36
 import logging
 import os
+import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from subprocess import check_call
-from subprocess import run
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class GenomeDownloader(object):
-    """docstring for GenomeDownloader"""
+    """
+    Genome downloader of NCBI
+    """
 
-    def __init__(self):
+    def __init__(self, out, ascp, ascp_key, ascp_param):
         super(GenomeDownloader, self).__init__()
-        self.ascp = None
-        self.ascp_key = None
-        self.ascp_param = None
+        self.out = os.path.abspath(out)
+        self.set_ascp(ascp)
+        self.set_ascp_key(ascp_key)
+        self.set_ascp_param(ascp_param)
         self.ascp_pre = "anonftp@ftp.ncbi.nih.gov:"
         self.db = None
+        self.og = []
         self.lineage = None
 
     def set_out(self, out):
@@ -54,16 +57,21 @@ class GenomeDownloader(object):
         """
         self.ascp_param = ascp_param
 
-    def set_db(self,db):
+    def set_db(self, db):
         """
+        Set the database to use(refseq | genbank)
 
-        :param db:
-        :return:
+        :param db: refseq | genbank
         """
-        self.db = db
+        dbs = set(["refseq", "genbank"])
+        if db in dbs:
+            self.db = db
+        else:
+            raise ValueError(f"Not support {db}")
 
     def set_og(self, og):
         """
+        The
         """
         self.og = og
 
@@ -80,15 +88,14 @@ class GenomeDownloader(object):
     def ascp_download(self, file_path, file_out):
         """
         """
-        # cmd = f"{self.ascp} -i {self.ascp_key} {self.ascp_param} {file_path} {file_out}"
-        list_cmd = [self.ascp, "-i", self.ascp_key, *
-        self.ascp_param.strip().split(' '), file_path, file_out]
-        # logging.info(cmd)
+        cmd = f"{self.ascp} -i {self.ascp_key} {self.ascp_param} {file_path} {file_out}"
+        logging.debug(cmd)
         try:
-            check_call(list_cmd)
+            out_bytes = subprocess.check_output(cmd, shell=True)
             return 0
-        except Exception as e:
-            return (file_out, file_path)
+        except subprocess.CalledProcessError as e:
+            code = e.returncode  # Return code
+            return code
 
     def get_taxon_dump(self):
         """
@@ -126,39 +133,19 @@ class GenomeDownloader(object):
             node.get_lineage(taxon)
         self.lineage = node.lineage
 
-    def get_summary(self):
+    def get_summary(self, fout):
         """
-        Get the summary file
+        Get the assembly_summary.txt file from NCBI
         """
-        summary_files = []
-        if "all" in self.og:
-            file_path = f"{self.ascp_pre}/genomes/{self.db}/assembly_summary_{self.db}.txt"
-            self.summary = os.path.join(self.out, "assembly_summary.txt")
-            logging.info(f"Download the {file_path}")
-            if self.ascp_download(file_path, self.summary) != 0:
-                logging.error(f"Fail to download {file_path}")
-                sys.exit(e)
-            else:
-                logging.info(f"Saved at {self.summary}")
+        file_path = f"{self.ascp_pre}/genomes/{self.db}/assembly_summary_{self.db}.txt"
+        self.summary = os.path.abspath(fout)
+        logging.info(f"Download the {file_path}")
+        code = self.ascp_download(file_path, self.summary)
+        if code != 0:
+            logging.error(f"Fail to download {file_path}")
+            sys.exit(code)
         else:
-            for og in self.og:
-                file_path = f"{self.ascp_pre}/genomes/{self.db}/{og}/assembly_summary.txt"
-                summary = os.path.join(self.out, f"{og}_assembly_summary.txt")
-                logging.info(f"Download the {file_path}")
-                if self.ascp_download(file_path, summary) != 0:
-                    logging.error(f"Fail to download {file_path}")
-                    sys.exit()
-                else:
-                    logging.info(f"Saved at {summary}")
-                summary_files.append(summary)
-            logging.info("Merge the summary files")
-            self.summary = os.path.join(self.out, f"assembly_summary.txt")
-            cmd = "cat {} > {}".format(' '.join(summary_files), self.summary)
-            try:
-                run(cmd, shell=True)
-                logging.info(f"Saved at {self.summary}")
-            except Exception as e:
-                sys.exit(e)
+            logging.info(f"Saved at {self.summary}")
 
     def filter_summary(self):
         """
@@ -233,7 +220,7 @@ class GenomeDownloader(object):
                 tasks.append(task)
             for future in as_completed(tasks):
                 exec_res = future.result()
-                if exec_res is not 0:
+                if exec_res != 0:
                     fail_tasks.append(future.result())
 
         if len(fail_tasks) > 0:
